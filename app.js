@@ -19,7 +19,7 @@ var client_cred = require('./cred.json');
 
 var client_id = client_cred.client_id; // Your client id
 var client_secret = client_cred.client_secret; // Your secret
-var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
+var redirect_uri = 'https://clear-tape-217105.appspot.com/callback'; // Your redirect uri
 
 /**
  * Generates a random string containing numbers and letters
