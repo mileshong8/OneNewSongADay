@@ -53,7 +53,10 @@
   <body>
 
     <div id="header" class="container">
-      <h1 style="padding-top: 10px; float: left;">One Song A Day</h1>
+      <div style="width: 50%">
+        <img src="/public/OneSongADayLogo.png" style="float: left">
+        <h1 style="margin-top: 10px; float: left;">One Song A Day</h1>
+      </div>
       <h3 id="user-name" style="float: right; width: 50%; text-align: right"></h3>
     </div>
     <div class="container">
@@ -97,46 +100,15 @@
             <h3>Today's Song of the Day:</h3>
 
           </div>
+          <div id="related_songs" style="text-align: center; padding-top: 15px;">
+            <h3>Related Songs:</h3>
+          </div>
         </div>
         <div id="oauth">
         </div>
       </div>
     </div>
 
-    <!--
-    <script id="user-profile-template" type="text/x-handlebars-template">
-      <div>
-        <h3>Today's Song of the Day:</h3>
-      </div>
-      <div>
-        <h1>Pick a genre:</h1>
-        <select id="genre1">
-          <option value="country">Country</option>
-          <option value="classical">Classical</option>
-          <option value="pop">Pop</option>
-          <option value="jazz">Jazz</option>
-          <option value="contemporary r&b">Contemporary R&B</option>
-          <option value="r&b">R&B</option>
-          <option value="rap">rap</option>
-          <option value="soul">Soul</option>
-          <option value="rock">Rock</option>
-          <option value="disoc">Disco</option>
-        </select>
-        <button id="submitgenre">Choose</button>
-      </div>
-    </script>
-
-
-    <script id="oauth-template" type="text/x-handlebars-template">
-
-      <h2>oAuth info</h2>
-      <dl class="dl-horizontal">
-        <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
-        <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}</dd>
-      </dl>
-
-    </script>
-    !-->
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
     <script>
         function getRandomInt(max) {
@@ -220,8 +192,30 @@
             });
           }, false);
           */
+
+          function get_related_songs(song_id) {
+            $.ajax({
+                url: "https://api.spotify.com/v1/recommendations?limit=5&market=US&seed_tracks=" + song_id + "&min_popularity=30",
+                headers: {
+                    'Authorization': 'Bearer ' + access_token
+                },
+                success: function(response) {
+                    console.log(response);
+                    if (response.tracks.length === 0) {
+                        $('#related_songs').append("<h5>No Related Songs :(</h5>")
+                    } else {
+                        response.tracks.forEach(function(track) {
+                            $("#related_songs").append("<iframe src='https://open.spotify.com/embed/track/"  + track.id +  "' width='20%' height='380' frameborder='0' allowtransparency='true' allow='encrypted-media'></iframe>")
+                        });
+                    }
+                    $('#related_songs').show();
+                }
+            })
+          }
+
           $(document).ready(function() {
               $('#by-genre').hide();
+              $('#related_songs').hide();
 
               $('#user-select-genre').click(function() {
                   $('#select-mode').hide();
@@ -236,6 +230,7 @@
               var genre_list;
 
               $('#submitgenre').click(function() {
+                  $("#by-genre").hide();
                   var genre = $('#genre1').val()[getRandomInt(5)];
                   $.ajax({
                       url: "https://api.spotify.com/v1/search?q=" + encodeURI(genre) + "&type=track&offset=" + getRandomInt(60),
@@ -245,12 +240,18 @@
                       success: function(response) {
                           console.log(response);
                           console.log(response.tracks.items[getRandomInt(20)]);
-                          var random_song = response.tracks.items[getRandomInt(20)];
-                          var song_link = "<iframe src='https://open.spotify.com/embed/track/"  + random_song.id +  "' width='100%' height='380' frameborder='0' allowtransparency='true' allow='encrypted-media'></iframe>";
-                          console.log(random_song.id);
-                          console.log(song_link);
+                          if (response.tracks.items.length === 0) {
+                              $('#song_area').append('<h5>Oops, something went wrong. Refresh and try again.</h5>')
+                          } else {
+                              var random_song = response.tracks.items[getRandomInt(20)];
+                              var song_link = "<iframe src='https://open.spotify.com/embed/track/"  + random_song.id +  "' width='100%' height='380' frameborder='0' allowtransparency='true' allow='encrypted-media'></iframe>";
+                              console.log(random_song.id);
+                              console.log(song_link);
 
-                          $('#song_area').append(song_link);
+                              $('#song_area').append(song_link);
+                              get_related_songs(random_song.id);
+                          }
+
                       }
                   })
               });
@@ -276,12 +277,17 @@
                               success: function(response) {
                                   console.log(response);
                                   console.log(response.tracks.items[getRandomInt(20)]);
-                                  var random_song = response.tracks.items[getRandomInt(20)];
-                                  var song_link = "<iframe src='https://open.spotify.com/embed/track/"  + random_song.id +  "' width='100%' height='380' frameborder='0' allowtransparency='true' allow='encrypted-media'></iframe>";
-                                  console.log(random_song.id);
-                                  console.log(song_link);
+                                  if (response.tracks.items.length === 0) {
+                                      $('#song_area').append('<h5>Oops, something went wrong. Refresh and try again.</h5>')
+                                  } else {
+                                      var random_song = response.tracks.items[getRandomInt(20)];
+                                      var song_link = "<iframe src='https://open.spotify.com/embed/track/"  + random_song.id +  "' width='100%' height='380' frameborder='0' allowtransparency='true' allow='encrypted-media'></iframe>";
+                                      console.log(random_song.id);
+                                      console.log(song_link);
+                                      $('#song_area').append(song_link);
 
-                                  $('#song_area').append(song_link);
+                                      get_related_songs(random_song.id);
+                                  }
                               }
                           })
                       }

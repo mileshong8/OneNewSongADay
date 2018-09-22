@@ -12,13 +12,14 @@ var request = require('request'); // "Request" library
 var cors = require('cors');
 var path = require('path');
 var engines = require('consolidate');
+var favicon = require('serve-favicon');
 var querystring = require('querystring');
 var cookieParser = require('cookie-parser');
 var client_cred = require('./cred.json');
 
 var client_id = client_cred.client_id; // Your client id
 var client_secret = client_cred.client_secret; // Your secret
-var redirect_uri = 'https://clear-tape-217105.appspot.com/callback'; // Your redirect uri
+var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
 
 /**
  * Generates a random string containing numbers and letters
@@ -48,6 +49,8 @@ app.set('view engine', 'html');
 app.use(express.static(__dirname))
    .use(cors())
    .use(cookieParser());
+
+app.use(favicon(path.join(__dirname, "public", "OneSongADayFavicon.ico")));
 
 app.get('/', function(req, res) {
   //res.render('index.html');
