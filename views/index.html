@@ -49,11 +49,28 @@
     #user-select-genre {
       background-color: #84bd00;
     }
+
+    #resubmit {
+      background-color: #84bd00;
+    }
+
+    #create-playlist {
+      background-color: #84bd00;
+    }
+
+    .title-front-page {
+      color: #84bd00;
+    }
+
+    #logo-top-right:hover {
+      cursor: pointer;
+    }
+
   </style>
   <body>
 
     <div id="header" class="container">
-      <div style="width: 50%">
+      <div id="logo-top-right" style="width: 50%">
         <img src="/public/OneSongADayLogo.png" style="float: left">
         <h1 style="margin-top: 10px; float: left;">One Song A Day</h1>
       </div>
@@ -61,7 +78,11 @@
     </div>
     <div class="container">
       <div id="login">
-        <h1>Welcome to One Song a Day</h1>
+        <h1>Welcome to <b class="title-front-page">One Song a Day</b></h1>
+        <p style="font-size: 20px;">
+          <b class="title-front-page">One Song A Day</b> is a web application that generates a random song from Spotify for you to listen to! Even though there is a vast amount of music on Spotify, I feel
+          that we do not get to branch out as much as we should. I hope that <b class="title-front-page">One Song A Day</b> can allow you to branch out and find new music that you like!
+        </p>
         <a href="/login" id="login-btn" class="btn btn-primary">Log in with Spotify</a>
       </div>
       <div id="loggedin">
@@ -70,6 +91,10 @@
             <h1>Choose an Option to get Started:</h1>
             <button id="total-random" class="btn btn-primary">Completely Random</button>
             <button id="user-select-genre" class="btn btn-primary">Select 5 Genres</button>
+`           <!--
+            <h2>Create a OneSongADay Playlist to save your favorite new songs!</h2>
+            <button id="create-playlist" class="btn btn-primary">Create Playlist</button>
+            !-->
           </div>
           <div id="by-genre">
             <h1>Pick 5 genres:</h1>
@@ -98,17 +123,19 @@
           </div>
           <div id="song_area" style="text-align: center">
             <h3>Today's Song of the Day:</h3>
-
           </div>
-          <div id="related_songs" style="text-align: center; padding-top: 15px;">
-            <h3>Related Songs:</h3>
+          <div id="related_songs" style="text-align: center; padding-top: 15px; padding-bottom: 25px;">
+            <div id="the_related_songs">
+              <h3>Related Songs:</h3>
+            </div>
+            <h5>Unhappy with your songs?</h5>
+            <button id="resubmit" class="btn btn-primary">Give Me Another!</button>
           </div>
         </div>
         <div id="oauth">
         </div>
       </div>
     </div>
-
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
     <script>
         function getRandomInt(max) {
@@ -146,6 +173,8 @@
             refresh_token = params.refresh_token,
             error = params.error;
 
+        var me_response;
+
         if (error) {
           alert('There was an error during the authentication');
         } else {
@@ -168,6 +197,7 @@
                   $('#login').hide();
                   $('#loggedin').show();
                   console.log(response);
+                  me_response = response;
                   document.getElementById('user-name').innerHTML = response.display_name;
                 }
             });
@@ -202,10 +232,10 @@
                 success: function(response) {
                     console.log(response);
                     if (response.tracks.length === 0) {
-                        $('#related_songs').append("<h5>No Related Songs :(</h5>")
+                        $('#the_related_songs').append("<h5 id='related-songs-error'>No Related Songs :(</h5>")
                     } else {
                         response.tracks.forEach(function(track) {
-                            $("#related_songs").append("<iframe src='https://open.spotify.com/embed/track/"  + track.id +  "' width='20%' height='380' frameborder='0' allowtransparency='true' allow='encrypted-media'></iframe>")
+                            $("#the_related_songs").append("<iframe src='https://open.spotify.com/embed/track/"  + track.id +  "' width='20%' height='380' frameborder='0' allowtransparency='true' allow='encrypted-media'></iframe>")
                         });
                     }
                     $('#related_songs').show();
@@ -213,9 +243,105 @@
             })
           }
 
+          function add_iframe(random_song) {
+              var song_link = "<iframe src='https://open.spotify.com/embed/track/"  + random_song.id +  "' width='100%' height='380' frameborder='0' allowtransparency='true' allow='encrypted-media'></iframe>";
+              console.log(random_song.id);
+              console.log(song_link);
+              $('#song_area').append(song_link);
+
+              get_related_songs(random_song.id);
+          }
+
+          function submit_genre_func() {
+              $("#by-genre").hide();
+              var genre = $('#genre1').val()[getRandomInt(5)];
+              $.ajax({
+                  url: "https://api.spotify.com/v1/search?q=" + encodeURI(genre) + "&type=track&offset=" + getRandomInt(60),
+                  headers: {
+                      'Authorization': 'Bearer ' + access_token
+                  },
+                  success: function(response) {
+                      console.log(response);
+                      console.log(response.tracks.items[getRandomInt(20)]);
+                      if (response.tracks.items.length === 0) {
+                          $('#song_area').append('<h5 class="error-refresh-msg">Oops, something went wrong. Refresh and try again.</h5>')
+                      } else {
+                          var random_song = response.tracks.items[getRandomInt(20)];
+                          add_iframe(random_song);
+                      }
+
+                  }
+              })
+          }
+
+          function completely_random_func() {
+              $('#select-mode').hide();
+              $.ajax({
+                  url: "https://api.spotify.com/v1/recommendations/available-genre-seeds",
+                  headers: {
+                      'Authorization': 'Bearer ' + access_token
+                  },
+                  success: function(response) {
+                      console.log(response);
+                      var genre_list = response.genres;
+                      var genre = genre_list[getRandomInt(genre_list.length)];
+                      //$('#genre1').val()[getRandomInt(5)]
+
+                      $.ajax({
+                          url: "https://api.spotify.com/v1/search?q=" + encodeURI(genre) + "&type=track&offset=" + getRandomInt(60),
+                          headers: {
+                              'Authorization': 'Bearer ' + access_token
+                          },
+                          success: function(response) {
+                              console.log(response);
+                              console.log(response.tracks.items[getRandomInt(20)]);
+                              if (response.tracks.items.length === 0) {
+                                  $('#song_area').append('<h5 class="error-refresh-msg">Oops, something went wrong. Refresh and try again.</h5>')
+                              } else {
+                                  var random_song = response.tracks.items[getRandomInt(20)];
+                                  add_iframe(random_song);
+                              }
+                          }
+                      })
+                  }
+              });
+
+          }
+
+          function create_playlist() {
+              $.ajax({
+                  type: 'POST',
+                  url: 'https://api.spotify.com/v1/users/' + me_response.id + '/playlists',
+                  data: {
+                      "name": "OneSongADay",
+                      "description": "Your favorites from OneSongADay.",
+                      "public": true
+                  },
+                  headers: {
+                      'Authorization': 'Bearer ' + access_token
+                  },
+                  success: function() {
+                      console.log("Playlist created");
+                  }
+              })
+          }
+
           $(document).ready(function() {
               $('#by-genre').hide();
               $('#related_songs').hide();
+
+              var is_comp_random;
+
+              $('#logo-top-right').click(function() {
+                  $('#related-songs-error').remove();
+                  $('.error-refresh-msg').remove();
+                  $("iframe").remove();
+                   //$('#song_area').hide();
+                   $('#related_songs').hide();
+                   $('#by-genre').hide();
+
+                   $('#select-mode').show();
+              });
 
               $('#user-select-genre').click(function() {
                   $('#select-mode').hide();
@@ -227,74 +353,30 @@
                   maxSelections: 5
               });
 
-              var genre_list;
+              $('#create-playlist').click(function() {
+                  create_playlist();
+              });
 
               $('#submitgenre').click(function() {
-                  $("#by-genre").hide();
-                  var genre = $('#genre1').val()[getRandomInt(5)];
-                  $.ajax({
-                      url: "https://api.spotify.com/v1/search?q=" + encodeURI(genre) + "&type=track&offset=" + getRandomInt(60),
-                      headers: {
-                          'Authorization': 'Bearer ' + access_token
-                      },
-                      success: function(response) {
-                          console.log(response);
-                          console.log(response.tracks.items[getRandomInt(20)]);
-                          if (response.tracks.items.length === 0) {
-                              $('#song_area').append('<h5>Oops, something went wrong. Refresh and try again.</h5>')
-                          } else {
-                              var random_song = response.tracks.items[getRandomInt(20)];
-                              var song_link = "<iframe src='https://open.spotify.com/embed/track/"  + random_song.id +  "' width='100%' height='380' frameborder='0' allowtransparency='true' allow='encrypted-media'></iframe>";
-                              console.log(random_song.id);
-                              console.log(song_link);
-
-                              $('#song_area').append(song_link);
-                              get_related_songs(random_song.id);
-                          }
-
-                      }
-                  })
+                  submit_genre_func();
+                  is_comp_random = false;
               });
 
               $('#total-random').click(function() {
-                  $('#select-mode').hide();
-                  $.ajax({
-                      url: "https://api.spotify.com/v1/recommendations/available-genre-seeds",
-                      headers: {
-                          'Authorization': 'Bearer ' + access_token
-                      },
-                      success: function(response) {
-                          console.log(response);
-                          genre_list = response.genres;
-                          var genre = genre_list[getRandomInt(genre_list.length)];
-                          //$('#genre1').val()[getRandomInt(5)]
-
-                          $.ajax({
-                              url: "https://api.spotify.com/v1/search?q=" + encodeURI(genre) + "&type=track&offset=" + getRandomInt(60),
-                              headers: {
-                                  'Authorization': 'Bearer ' + access_token
-                              },
-                              success: function(response) {
-                                  console.log(response);
-                                  console.log(response.tracks.items[getRandomInt(20)]);
-                                  if (response.tracks.items.length === 0) {
-                                      $('#song_area').append('<h5>Oops, something went wrong. Refresh and try again.</h5>')
-                                  } else {
-                                      var random_song = response.tracks.items[getRandomInt(20)];
-                                      var song_link = "<iframe src='https://open.spotify.com/embed/track/"  + random_song.id +  "' width='100%' height='380' frameborder='0' allowtransparency='true' allow='encrypted-media'></iframe>";
-                                      console.log(random_song.id);
-                                      console.log(song_link);
-                                      $('#song_area').append(song_link);
-
-                                      get_related_songs(random_song.id);
-                                  }
-                              }
-                          })
-                      }
-                  });
-
-
+                  completely_random_func();
+                  is_comp_random = true;
               });
+
+              $('#resubmit').click(function() {
+                  if (is_comp_random) {
+                      $('iframe').remove();
+                      $('#related-songs-error').remove();
+                      $('.error-refresh-msg').remove();
+                      completely_random_func();
+                  } else {
+                      submit_genre_func();
+                  }
+              })
           });
 
         }
