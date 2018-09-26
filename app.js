@@ -19,8 +19,8 @@ var client_cred = require('./cred.json');
 
 var client_id = client_cred.client_id; // Your client id
 var client_secret = client_cred.client_secret; // Your secret
-var redirect_uri = 'https://clear-tape-217105.appspot.com/callback'; // Your redirect uri
-//var redirect_uri = 'http://localhost:8888/callback';
+//var redirect_uri = 'https://clear-tape-217105.appspot.com/callback'; // Your redirect uri
+var redirect_uri = 'http://localhost:8888/callback';
 
 /**
  * Generates a random string containing numbers and letters
@@ -65,7 +65,7 @@ app.get('/login', function(req, res) {
 
   // your application requests authorization
   //var scope = 'playlist-modify-public playlist-modify-private user-read-private user-read-email';
-    var scope = 'playlist-modify-public playlist-modify-private user-read-private user-read-email';
+    var scope = 'user-read-private user-read-email';
 
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({

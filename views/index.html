@@ -374,6 +374,9 @@
                       $('.error-refresh-msg').remove();
                       completely_random_func();
                   } else {
+                      $('iframe').remove();
+                      $('#related-songs-error').remove();
+                      $('.error-refresh-msg').remove();
                       submit_genre_func();
                   }
               })
